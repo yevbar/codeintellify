@@ -9,7 +9,7 @@ env:
   global:
     - FORCE_COLOR=1
 install:
-  - yarn
+  - yarn --frozen-lockfile
 jobs:
   include:
     - stage: test
