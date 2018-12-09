@@ -40,7 +40,6 @@ describe('Hoverifier', () => {
             scheduler.run(({ cold, expectObservable }) => {
                 const hoverifier = createHoverifier({
                     closeButtonClicks: NEVER,
-                    goToDefinitionClicks: NEVER,
                     hoverOverlayElements: of(null),
                     hoverOverlayRerenders: EMPTY,
                     fetchHover: createStubHoverFetcher({ range: hoverRange }, LOADER_DELAY + delayTime),
@@ -106,7 +105,6 @@ describe('Hoverifier', () => {
             scheduler.run(({ cold, expectObservable }) => {
                 const hoverifier = createHoverifier({
                     closeButtonClicks: NEVER,
-                    goToDefinitionClicks: new Observable<MouseEvent>(),
                     hoverOverlayElements: of(null),
                     hoverOverlayRerenders: EMPTY,
                     fetchHover: createStubHoverFetcher(hover, delayTime),
@@ -189,11 +187,12 @@ describe('Hoverifier', () => {
         }
     })
 
-    it('emits loading and then state on click events', () => {
+    it('emits partial data and loading on click events', () => {
         for (const codeView of testcases) {
             const scheduler = new TestScheduler((a, b) => chai.assert.deepEqual(a, b))
 
-            const delayTime = LOADER_DELAY + 100
+            const hoverDelayTime = 100
+            const actionsDelayTime = 150
             const hover = {}
             const actions = ['foo', 'bar']
 
@@ -202,8 +201,8 @@ describe('Hoverifier', () => {
                     closeButtonClicks: new Observable<MouseEvent>(),
                     hoverOverlayElements: of(null),
                     hoverOverlayRerenders: EMPTY,
-                    fetchHover: createStubHoverFetcher(hover, delayTime),
-                    fetchActions: createStubActionsFetcher(actions, delayTime),
+                    fetchHover: createStubHoverFetcher(hover, LOADER_DELAY + hoverDelayTime),
+                    fetchActions: createStubActionsFetcher(actions, LOADER_DELAY + actionsDelayTime),
                 })
 
                 const positionJumps = new Subject<{
@@ -232,24 +231,21 @@ describe('Hoverifier', () => {
                         actionsOrError,
                         hoverOrError,
                     })),
-                    distinctUntilChanged((a, b) => isEqual(a, b)),
-                    // For this test, filter out the intermediate emissions where exactly one of the fetchers is
-                    // loading.
-                    filter(
-                        ({ actionsOrError, hoverOrError }) =>
-                            (actionsOrError === LOADING) === (hoverOrError === LOADING)
-                    )
+                    distinctUntilChanged((a, b) => isEqual(a, b))
                 )
 
                 const inputDiagram = 'a'
 
                 // Subtract 1ms before "b" because "a" takes up 1ms.
-                const outputDiagram = `${LOADER_DELAY}ms a ${TOOLTIP_DISPLAY_DELAY - 1}ms b`
+                const outputDiagram = `${LOADER_DELAY}ms ${hoverDelayTime}ms a ${actionsDelayTime -
+                    hoverDelayTime -
+                    1}ms b`
 
                 const outputValues: {
                     [key: string]: Pick<HoverOverlayProps<{}, {}, string>, 'hoverOrError' | 'actionsOrError'>
                 } = {
-                    a: { hoverOrError: LOADING, actionsOrError: LOADING }, // actions is undefined when it is loading
+                    // No hover is shown if it would just consist of LOADING.
+                    a: { hoverOrError: createHoverAttachment(hover), actionsOrError: LOADING },
                     b: { hoverOrError: createHoverAttachment(hover), actionsOrError: actions },
                 }
 
@@ -275,7 +271,6 @@ describe('Hoverifier', () => {
             scheduler.run(({ cold, expectObservable }) => {
                 const hoverifier = createHoverifier({
                     closeButtonClicks: new Observable<MouseEvent>(),
-                    goToDefinitionClicks: new Observable<MouseEvent>(),
                     hoverOverlayElements: of(null),
                     hoverOverlayRerenders: EMPTY,
                     fetchHover: createStubHoverFetcher(hover),
@@ -341,7 +336,6 @@ describe('Hoverifier', () => {
             scheduler.run(({ cold, expectObservable }) => {
                 const hoverifier = createHoverifier({
                     closeButtonClicks: new Observable<MouseEvent>(),
-                    goToDefinitionClicks: new Observable<MouseEvent>(),
                     hoverOverlayElements: of(null),
                     hoverOverlayRerenders: EMPTY,
                     fetchHover: createStubHoverFetcher(hover),
