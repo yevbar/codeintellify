@@ -1,3 +1,4 @@
+import { Position, Range } from '@sourcegraph/extension-api-types'
 import { isEqual } from 'lodash'
 import {
     combineLatest,
@@ -27,7 +28,6 @@ import {
     withLatestFrom,
 } from 'rxjs/operators'
 import { Key } from 'ts-key-enum'
-import { Position, Range } from 'vscode-languageserver-types'
 import { asError, ErrorLike, isErrorLike } from './errors'
 import { isDefined } from './helpers'
 import { scrollIntoCenterIfNeeded } from './helpers'
@@ -43,7 +43,7 @@ import {
     getTokenAtPosition,
     HoveredToken,
 } from './token_position'
-import { HoverAttachment, isHoverAttachmentWithRange, LineOrPositionOrRange, LOADING } from './types'
+import { HoverAttachment, isHoverAttachmentWithRange, isPosition, LineOrPositionOrRange, LOADING } from './types'
 
 export { HoveredToken }
 
@@ -435,7 +435,7 @@ export function createHoverifier<C extends object>({
         // a position, to a line-only position, back to the first position would get ignored
         distinctUntilChanged((a, b) => isEqual(a, b)),
         // Ignore undefined or partial positions (e.g. line only)
-        filter((jump): jump is typeof jump & { position: Position } => Position.is(jump.position)),
+        filter((jump): jump is typeof jump & { position: Position } => isPosition(jump.position)),
         map(({ position, codeView, dom, ...rest }) => {
             const cell = dom.getCodeElementFromLineNumber(codeView, position.line, position.part)
             if (!cell) {
@@ -522,7 +522,7 @@ export function createHoverifier<C extends object>({
         map(({ position, resolveContext, eventType, ...rest }) => ({
             ...rest,
             eventType,
-            position: Position.is(position) ? { ...position, ...resolveContext(position) } : undefined,
+            position: isPosition(position) ? { ...position, ...resolveContext(position) } : undefined,
         })),
         share()
     )
