@@ -42,7 +42,7 @@ import {
     getTokenAtPosition,
     HoveredToken,
 } from './token_position'
-import { HoverAttachment, isHoverAttachmentWithRange, isPosition, LineOrPositionOrRange, LOADING } from './types'
+import { HoverAttachment, LineOrPositionOrRange, LOADING } from './types'
 
 export { HoveredToken }
 
@@ -449,7 +449,7 @@ export function createHoverifier<C extends object, D, A>({
         // a position, to a line-only position, back to the first position would get ignored
         distinctUntilChanged((a, b) => isEqual(a, b)),
         // Ignore undefined or partial positions (e.g. line only)
-        filter((jump): jump is typeof jump & { position: Position } => isPosition(jump.position)),
+        filter((jump): jump is typeof jump & { position: Position } => jump.position.character !== undefined),
         map(({ position, codeView, dom, ...rest }) => {
             const cell = dom.getCodeElementFromLineNumber(codeView, position.line, position.part)
             if (!cell) {
@@ -536,7 +536,7 @@ export function createHoverifier<C extends object, D, A>({
         map(({ position, resolveContext, eventType, ...rest }) => ({
             ...rest,
             eventType,
-            position: isPosition(position) ? { ...position, ...resolveContext(position) } : undefined,
+            position: position ? { ...position, ...resolveContext(position) } : undefined,
         })),
         share()
     )
@@ -601,7 +601,11 @@ export function createHoverifier<C extends object, D, A>({
                 switchMap(hoverObservable => hoverObservable),
                 switchMap(({ hoverOrError, position, adjustPosition, ...rest }) => {
                     let pos =
-                        isHoverAttachmentWithRange(hoverOrError) && position
+                        hoverOrError &&
+                        hoverOrError !== LOADING &&
+                        !isErrorLike(hoverOrError) &&
+                        hoverOrError.range &&
+                        position
                             ? { ...hoverOrError.range.start, ...position }
                             : position
 

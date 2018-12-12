@@ -1,4 +1,4 @@
-import { Position, Range } from '@sourcegraph/extension-api-types'
+import { Range } from '@sourcegraph/extension-api-types'
 
 export const LOADING: 'loading' = 'loading'
 
@@ -11,28 +11,6 @@ export interface HoverAttachment {
      * position or the current position itself.
      */
     range?: Range
-}
-
-/**
- * Reports whether {@link value} is a {@link HoverAttachment} value with a range.
- */
-export function isHoverAttachmentWithRange(value: any): value is HoverAttachment & { range: Range } {
-    return (
-        value &&
-        value.range &&
-        value.range.start &&
-        typeof value.range.start.line === 'number' &&
-        typeof value.range.start.character === 'number' &&
-        typeof value.range.end.line === 'number' &&
-        typeof value.range.end.character === 'number'
-    )
-}
-
-/**
- * Reports whether {@link value} is a {@link Position}.
- */
-export function isPosition(value: any): value is Position {
-    return value && typeof value.line === 'number' && typeof value.character === 'number'
 }
 
 /**

@@ -1,7 +1,6 @@
 import { from, fromEvent, merge, Observable, Subscribable } from 'rxjs'
 import { filter, map, switchMap, tap } from 'rxjs/operators'
 import { convertCodeElementIdempotent, DiffPart, DOMFunctions, HoveredToken, locateTarget } from './token_position'
-import { isPosition } from './types'
 
 export type SupportedMouseEvent = 'click' | 'mousemove' | 'mouseover'
 
@@ -70,7 +69,10 @@ export const findPositionsFromEvents = (options: DOMFunctions) => (
         // Find out the position that was hovered over
         map(({ target, codeView, ...rest }) => {
             const hoveredToken = locateTarget(target, options)
-            const position = isPosition(hoveredToken) ? hoveredToken : undefined
+            const position =
+                hoveredToken && 'character' in hoveredToken && hoveredToken.character !== undefined
+                    ? hoveredToken
+                    : undefined
             return { position, codeView, ...rest }
         })
     )
