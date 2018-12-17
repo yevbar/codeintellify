@@ -24,6 +24,7 @@ import {
     share,
     switchMap,
     takeUntil,
+    tap,
     withLatestFrom,
 } from 'rxjs/operators'
 import { Key } from 'ts-key-enum'
@@ -758,7 +759,7 @@ export function createHoverifier<C extends object>({
                 })
             )
             .subscribe(hoverOverlayIsFixed => {
-                container.update({ hoverOverlayIsFixed })
+                container.update({ hoverOverlayIsFixed: false })
             })
     )
 
